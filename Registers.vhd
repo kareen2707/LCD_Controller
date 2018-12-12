@@ -1,7 +1,86 @@
--- Register submodule
+- Register submodule
 -- Creation date: 12/12/2018
 -- Version: 1.0
 
 
 library ieee;
 use ieee.std_logic_1164.all;
+
+entity Registers is
+	port(
+		Clk	:	in  std_logic;
+		Reset_n	: in std_logic;
+		
+		--Avalon Slave Signals
+		AS_Address		: 	in std_logic_vector(2 downto 0);
+		AS_ChipSelect	: 	in std_logic;
+		AS_Write		:	in std_logic;
+		AS_Read 		:	in std_logic;
+		AS_WriteData 	:	in std_logic_vector(31 downto 0);
+		AS_ReadData 	:	out std_logic_vector(31 downto 0);
+		AS_IRQ			:	out std_logic;
+		
+		--Signals connected to Master Controller
+		
+		Reading			: 	in std_logic;
+		Address			: 	out std_logic_vector(31 downto 0);
+		Lenght			:	out std_logic_vector(31 downto 0);
+		Start			: 	out std_logic;
+		AllowToRead		:	out std_logic; -- I think is no needed
+		
+		--Signals connected to LCD_Control
+		Cmd_Address		:	out std_logic_vector(31 downto 0);
+		Cmd_Data		: 	out std_logic_vector(31 downto 0);
+		Ack_Write		: 	in std_logic -- I think is no needed
+	);
+end entity Registers;
+
+architecture behavioural of Registers is
+	
+	-- Registers for Master Controller configuration
+	
+	Signal AcqAddress	: 	std_logic_vector(31 downto 0);
+	Signal AcqLength	:	std_logic_vector(31 downto 0);
+	
+	Signal Acq_Cmd_Address	: 	std_logic_vector(31 downto 0);
+	Signal Acq_Cmd_Data		:	std_logic_vector(31 downto 0);
+	
+Begin
+	
+	acquisition_process: Process (Clk, Reset_n)
+	Begin
+		if Reset_n = '0' then
+			AcqAddress <= (others =>'0');
+			AcqLength <= (others =>'0');
+			Acq_Cmd_Address <= (others =>'0');
+			Acq_Cmd_Data <= (others =>'0');
+			
+		elsif rising_edge(Clk) then
+		 if AS_ChipSelect = '1' then
+			if AS_Write = '1' then
+				case AS_Address is
+					when '000' => AcqAddress <= AS_WriteData;
+					when '001' => AcqLength <= AS_WriteData;
+					when '010' => Start <= AS_WriteData(0);
+					when '011' => Acq_Cmd_Address <= AS_WriteData;
+					when '100' => Acq_Cmd_Data <= AS_WriteData;
+					when '101' => AllowToRead <= AS_WriteData(0);
+				end case;
+			end if;
+			
+			if AS_Read = '1' then
+				case AS_Address is
+					when '000' => AS_ReadData <= AcqAddress;
+					when '001' => AS_ReadData <= AcqLength;
+					when '010' => AS_ReadData(0) <= Start;
+					when '011' => AS_ReadData <= Acq_Cmd_Address;
+					when '100' => AS_ReadData <= Acq_Cmd_Data;
+					when '101' => AS_ReadData(0) <= AllowToRead;
+				end case;
+			end if;
+			
+		end if;
+		
+	end acquisition_process;
+	
+end ;
