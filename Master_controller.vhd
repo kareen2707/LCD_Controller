@@ -6,47 +6,52 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity Registers is
+entity Master_Controller is
 	port(
 		Clk	:	in  std_logic;
 		Reset_n	: in std_logic;
 		
-		--Avalon Slave Signals
-		AS_Address		: 	in std_logic_vector(2 downto 0);
-		AS_ChipSelect	: 	in std_logic;
-		AS_Write		:	in std_logic;
-		AS_Read 		:	in std_logic;
-		AS_WriteData 	:	in std_logic_vector(31 downto 0);
-		AS_ReadData 	:	out std_logic_vector(31 downto 0);
-		AS_IRQ			:	out std_logic;
+		--Configuration registers
+		Address				: 	in std_logic_vector(31 downto 0);
+		Length_read			: 	in std_logic_vector(31 downto 0);
+		Start		 		:	in std_logic;
+		AllowToRead			:	in std_logic;
+		Reading	 			:	out std_logic;
 		
-		--Signals connected to Master Controller
+		--Signals connected to FIFO
 		
-		Reading			: 	in std_logic;
-		AcqAddress			: 	out std_logic_vector(31 downto 0);
-		AcqLength			:	out std_logic_vector(31 downto 0);
-		Start			: 	out std_logic; -- Or we use this or AllowToRead
-		AllowToRead		:	out std_logic; 
+		FIFO_full			: 	in std_logic;
+		WrFIFO				: 	in std_logic;
+		WrData				:	out std_logic_vector(31 downto 0);
 		
-		--Signals connected to LCD_Control
-		Cmd_Address		:	out std_logic_vector(31 downto 0);
-		Cmd_Data		: 	out std_logic_vector(31 downto 0);
-		Ack_Write		: 	in std_logic 
+		
+		--Avalon Master Signals
+		AM_Address			: 	out std_logic_vector(31 downto 0);
+		AM_WaitRequest		: 	in std_logic;
+		AS_Read 			:	out std_logic;
+		AS_BurstCount 		:	out std_logic_vector(2 downto 0);
+		AS_ReadDataValid 	:	in std_logic;
+		AS_ReadData			:	in std_logic_vector(31 downto 0);
 	);
-end entity Registers;
+end entity Master_Controller;
 
 architecture behavioural of Registers is
+
+-- State definition
+
+type state is (Idle, WaitData, ReadData, WriteData );
+signal CurrentState, NextState : state;
+
+-- Auxiliar signals
+signal counter : integer range 0 to 4 :=0;
 	
 	
 Begin
 	
-	acquisition_process: Process (Clk, Reset_n)
+	NextSate_process: Process (Clk, Reset_n)
 	Begin
 		if Reset_n = '0' then
-			AcqAddress <= (others =>'0');
-			AcqLength <= (others =>'0');
-			Cmd_Address <= (others =>'0');
-			Cmd_Data <= (others =>'0');
+			CurrentState <= idle;
 			
 		elsif rising_edge(Clk) then
 		 if AS_ChipSelect = '1' then
