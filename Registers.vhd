@@ -23,27 +23,20 @@ entity Registers is
 		--Signals connected to Master Controller
 		
 		Reading			: 	in std_logic;
-		Address			: 	out std_logic_vector(31 downto 0);
-		Lenght			:	out std_logic_vector(31 downto 0);
-		Start			: 	out std_logic;
-		AllowToRead		:	out std_logic; -- I think is no needed
+		AcqAddress			: 	out std_logic_vector(31 downto 0);
+		AcqLength			:	out std_logic_vector(31 downto 0);
+		Start			: 	out std_logic; -- Or we use this or AllowToRead
+		AllowToRead		:	out std_logic; 
 		
 		--Signals connected to LCD_Control
 		Cmd_Address		:	out std_logic_vector(31 downto 0);
 		Cmd_Data		: 	out std_logic_vector(31 downto 0);
-		Ack_Write		: 	in std_logic -- I think is no needed
+		Ack_Write		: 	in std_logic 
 	);
 end entity Registers;
 
 architecture behavioural of Registers is
 	
-	-- Registers for Master Controller configuration
-	
-	Signal AcqAddress	: 	std_logic_vector(31 downto 0);
-	Signal AcqLength	:	std_logic_vector(31 downto 0);
-	
-	Signal Acq_Cmd_Address	: 	std_logic_vector(31 downto 0);
-	Signal Acq_Cmd_Data		:	std_logic_vector(31 downto 0);
 	
 Begin
 	
@@ -52,8 +45,8 @@ Begin
 		if Reset_n = '0' then
 			AcqAddress <= (others =>'0');
 			AcqLength <= (others =>'0');
-			Acq_Cmd_Address <= (others =>'0');
-			Acq_Cmd_Data <= (others =>'0');
+			Cmd_Address <= (others =>'0');
+			Cmd_Data <= (others =>'0');
 			
 		elsif rising_edge(Clk) then
 		 if AS_ChipSelect = '1' then
@@ -62,8 +55,8 @@ Begin
 					when '000' => AcqAddress <= AS_WriteData;
 					when '001' => AcqLength <= AS_WriteData;
 					when '010' => Start <= AS_WriteData(0);
-					when '011' => Acq_Cmd_Address <= AS_WriteData;
-					when '100' => Acq_Cmd_Data <= AS_WriteData;
+					when '011' => Cmd_Address <= AS_WriteData;
+					when '100' => Cmd_Data <= AS_WriteData;
 					when '101' => AllowToRead <= AS_WriteData(0);
 				end case;
 			end if;
@@ -73,9 +66,11 @@ Begin
 					when '000' => AS_ReadData <= AcqAddress;
 					when '001' => AS_ReadData <= AcqLength;
 					when '010' => AS_ReadData(0) <= Start;
-					when '011' => AS_ReadData <= Acq_Cmd_Address;
-					when '100' => AS_ReadData <= Acq_Cmd_Data;
+					when '011' => AS_ReadData <= Cmd_Address;
+					when '100' => AS_ReadData <= Cmd_Data;
 					when '101' => AS_ReadData(0) <= AllowToRead;
+					when '110' => AS_ReadData(0) <= Ack_Write;
+					when '111' => AS_ReadData(0) <= Reading;
 				end case;
 			end if;
 			
