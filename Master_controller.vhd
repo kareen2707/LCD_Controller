@@ -1,4 +1,4 @@
--- Register submodule
+-- Master_Controller submodule
 -- Creation date: 12/12/2018
 -- Version: 1.0
 
@@ -13,25 +13,26 @@ entity Master_Controller is
 		
 		--Configuration registers
 		Address				: 	in std_logic_vector(31 downto 0);
-		Length_read			: 	in std_logic_vector(31 downto 0);
+		BurstCount			: 	in std_logic_vector(31 downto 0);
 		Start		 		:	in std_logic;
 		AllowToRead			:	in std_logic;
 		Reading	 			:	out std_logic;
 		
 		--Signals connected to FIFO
 		
-		FIFO_full			: 	in std_logic;
+		FIFO_full			: 	in std_logic; --We could no need it
+		FIFO_Almost_full	:	in std_logic;
 		WrFIFO				: 	in std_logic;
 		WrData				:	out std_logic_vector(31 downto 0);
 		
 		
 		--Avalon Master Signals
-		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_WaitRequest		: 	in std_logic;
-		AS_Read 			:	out std_logic;
-		AS_BurstCount 		:	out std_logic_vector(2 downto 0);
-		AS_ReadDataValid 	:	in std_logic;
-		AS_ReadData			:	in std_logic_vector(31 downto 0);
+		AM_ReadDataValid 	:	in std_logic;
+		AM_ReadData			:	in std_logic_vector(31 downto 0);
+		AM_Address			: 	out std_logic_vector(31 downto 0);
+		AM_Read 			:	out std_logic;
+		AM_BurstCount 		:	out std_logic_vector(2 downto 0)
 	);
 end entity Master_Controller;
 

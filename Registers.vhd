@@ -23,10 +23,10 @@ entity Registers is
 		--Signals connected to Master Controller
 		
 		Reading			: 	in std_logic;
-		AcqAddress			: 	out std_logic_vector(31 downto 0);
-		AcqLength			:	out std_logic_vector(31 downto 0);
-		Start			: 	out std_logic; -- Or we use this or AllowToRead
-		AllowToRead		:	out std_logic; 
+		AcqAddress		: 	out std_logic_vector(31 downto 0);
+		AcqBurstCount	:	out std_logic_vector(31 downto 0);
+		Start			: 	out std_logic; 
+		AllowToRead		:	out std_logic; --Maybe this is no needed
 		
 		--Signals connected to LCD_Control
 		Cmd_Address		:	out std_logic_vector(31 downto 0);
