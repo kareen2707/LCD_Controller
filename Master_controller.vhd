@@ -15,14 +15,14 @@ entity Master_Controller is
 		Address				: 	in std_logic_vector(31 downto 0);
 		BurstCount			: 	in std_logic_vector(31 downto 0);
 		Start		 		:	in std_logic;
-		AllowToRead			:	in std_logic;
+		AllowToRead			:	in std_logic; 
 		Reading	 			:	out std_logic;
 		
 		--Signals connected to FIFO
 		
 		FIFO_full			: 	in std_logic; --We could no need it
 		FIFO_Almost_full	:	in std_logic;
-		WrFIFO				: 	in std_logic;
+		WrFIFO				: 	out std_logic;
 		WrData				:	out std_logic_vector(31 downto 0);
 		
 		
