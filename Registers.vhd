@@ -45,6 +45,7 @@ Begin
 		if Reset_n = '0' then
 			AcqAddress <= (others =>'0');
 			AcqLength <= (others =>'0');
+			AcqBurstCount <= (others =>'0');
 			Cmd_Address <= (others =>'0');
 			Cmd_Data <= (others =>'0');
 			
@@ -54,7 +55,7 @@ Begin
 					case AS_Address is
 						when "000" => AcqAddress <= unsigned(AS_WriteData);
 						when "001" => AcqLength <= unsigned(AS_WriteData);
-						when "010" => AcqBurstCount <= unsigned(AS_WriteData);
+						when "010" => AcqBurstCount <= unsigned(AS_WriteData(1 downto 0));
 						when "011" => Start <= AS_WriteData(0);
 						when "100" => Cmd_Address <= unsigned(AS_WriteData);
 						when "101" => Cmd_Data <= unsigned(AS_WriteData);

@@ -13,8 +13,9 @@ entity Master_Controller is
 		
 		--Configuration registers
 		Address				: 	in unsigned(31 downto 0);
-		BurstCount			: 	in unsigned(31 downto 0);
-		Start		 		:	in std_logic;
+		DataLength			: 	in unsigned(31 downto 0);
+		BurstCount			: 	in unsigned(1 downto 0);
+		Start		 		:	in std_logic; -- Maybe we don't need it
 		Currently_writing	:	in std_logic; 
 		Reading	 			:	out std_logic;
 		
@@ -39,7 +40,7 @@ architecture behavioural of Registers is
 
 -- State definition
 
-type state is (Idle, WaitFifo, WaitData, WriteData, AcqData );
+type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, AcqData );
 signal CurrentState : state;
 	
 	
@@ -60,14 +61,15 @@ Begin
 		 
 			case CurrentState is
 				when Idle =>
-					AM_Read <= '0';
-					WrFIFO <= '0';
-					Reading <= '0';
-					if Currently_writing = '0' then		--Start when the Camera Controller is not using the SRAM module
+					if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
+						CurrentState <= WaitPermission;
+					end if;
+
+				when WaitPermission =>
+					if Currently_writing = '0' then
 						CurrentState <= WaitFifo;
 						AM_Address <= std_logic_vector(Address);
 						AM_BurstCount <= std_logic_vector(BurstCount);
-					
 					end if;
 
 				when WaitFifo =>
@@ -81,9 +83,7 @@ Begin
 				
 				when WaitData =>
 
-					if BurstCount = X"0000_0000" then	--We have readed all the data
-						CurrentState <= Idle;
-					elsif AM_ReadDataValid = '1' then	--We have readed a new data from SRAM
+					if AM_ReadDataValid = '1' then	--We have readed a new data from SRAM
 						CurrentState <= WriteData;
 						WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
 					end if;
@@ -92,18 +92,21 @@ Begin
 
 					if AM_WaitRequest = '0' then
 						CurrentState <= AcqData;
-						--Needed to complete?
+						AM_Read <= '0';
+						WrFIFO <= '0';
 					end if;
 
 				when AcqData =>
 
 					if AM_ReadDataValid = '0' then
-						CurrentState <= WaitData;
+						CurrentState <= WaitPermission;
 						Reading <= '0';
-						if BurstCount /= 1 then
-							BurstCount <= BurstCount - 1;
+						if DataLength /= 1 then
+							Address <= Address + 1;
+							DataLength <= DataLength - 1;
 						else
-							BurstCount <= BurstCount;
+							Address <= Address;
+							DataLength <= DataLength;
 						end if;
 					end if;
 			end case;
