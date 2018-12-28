@@ -41,9 +41,6 @@ architecture behavioural of Registers is
 
 type state is (Idle, WaitFifo, WaitData, WriteData, AcqData );
 signal CurrentState : state;
-
--- Auxiliar signals
-signal counter : integer range 0 to 4 :=0;
 	
 	
 Begin
@@ -61,56 +58,58 @@ Begin
 			
 		elsif rising_edge(Clk) then
 		 
-		case CurrentState is
-			when Idle =>
-				AM_Read <= '0';
-				WrFIFO <= '0';
-				Reading <= '0';
-				if Currently_writing = '0' then		--Start when the Camera Controller is not using the SRAM module
-					CurrentState <= WaitFifo;
-					AM_Address <= std_logic_vector(Address);
-					AM_BurstCount <= std_logic_vector(BurstCount);
-					
-				end if;
-
-			when WaitFifo =>
-
-				if FIFO_Almost_full = '0' then 
-					CurrentState <= WaitData;
-					WrFIFO <= '1';					--Notifying we want to write into the FIFO
-					AM_Read <= '1';					--Initializing the reading process
-					Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
-				
-			when WaitData =>
-
-				if BurstCount = X"0000_0000" then	--We have readed all the data
-					CurrentState <= Idle;
-				elsif AM_ReadDataValid = '1' then	--We have readed a new data from SRAM
-					CurrentState <= WriteData;
-					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-				end if;
-			
-			when WriteData =>
-
-				if AM_WaitRequest = '0' then
-					CurrentState <= AcqData;
-					--Needed to complete?
-
-			when AcqData =>
-
-				if AM_ReadDataValid = '0' then
-					CurrentState <= WaitData;
+			case CurrentState is
+				when Idle =>
+					AM_Read <= '0';
+					WrFIFO <= '0';
 					Reading <= '0';
-					if BurstCount /= 1 then
-						BurstCount <= BurstCount - 1;
-					else
-					BurstCount <= BurstCount;
+					if Currently_writing = '0' then		--Start when the Camera Controller is not using the SRAM module
+						CurrentState <= WaitFifo;
+						AM_Address <= std_logic_vector(Address);
+						AM_BurstCount <= std_logic_vector(BurstCount);
+					
 					end if;
-				end if;
+
+				when WaitFifo =>
+
+					if FIFO_Almost_full = '0' then 
+						CurrentState <= WaitData;
+						WrFIFO <= '1';					--Notifying we want to write into the FIFO
+						AM_Read <= '1';					--Initializing the reading process
+						Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
+					end if;
+				
+				when WaitData =>
+
+					if BurstCount = X"0000_0000" then	--We have readed all the data
+						CurrentState <= Idle;
+					elsif AM_ReadDataValid = '1' then	--We have readed a new data from SRAM
+						CurrentState <= WriteData;
+						WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
+					end if;
+			
+				when WriteData =>
+
+					if AM_WaitRequest = '0' then
+						CurrentState <= AcqData;
+						--Needed to complete?
+					end if;
+
+				when AcqData =>
+
+					if AM_ReadDataValid = '0' then
+						CurrentState <= WaitData;
+						Reading <= '0';
+						if BurstCount /= 1 then
+							BurstCount <= BurstCount - 1;
+						else
+							BurstCount <= BurstCount;
+						end if;
+					end if;
 			end case;
 
 		end if;
 		
-	end acquisition_process;
+	end process AM_process;
 	
 end ;
