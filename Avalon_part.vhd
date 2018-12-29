@@ -32,3 +32,35 @@ entity Avalon_part is
 		AM_BurstCount 		:	out std_logic_vector(1 downto 0)
     );
 end Avalon_part;
+
+architecture behavioural of Avalon_part is
+
+    component Registers port(
+        Clk	:	in  std_logic;
+		Reset_n	: in std_logic;
+		
+		--Avalon Slave Signals
+		AS_Address			: 	in std_logic_vector(2 downto 0);
+		AS_ChipSelect		: 	in std_logic;
+		AS_Write			:	in std_logic;
+		AS_Read 			:	in std_logic;
+		AS_WriteData 		:	in std_logic_vector(31 downto 0);
+		AS_ReadData 		:	out std_logic_vector(31 downto 0);
+		
+		--Signals connected to Master Controller
+		
+		Reading				: 	in std_logic;
+		AcqAddress			: 	out unsigned(31 downto 0);
+		AcqBurstCount		:	out unsigned(1 downto 0);
+		AcqLength			: 	out unsigned(31 downto 0);
+		Start				: 	out std_logic; 
+		Currently_writing	:	out std_logic; 
+		
+		--Signals connected to LCD_Control
+		Cmd_Address			:	out unsigned(31 downto 0);
+		Cmd_Data			: 	out unsigned(31 downto 0);
+		Ack_Write			: 	in std_logic 
+    );
+    end component;
+
+    
