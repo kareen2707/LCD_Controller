@@ -1,8 +1,3 @@
--- Avalon_part module result of joining Master_controller.vhd and Registers.vhd
--- Creation date: 29/12/2018
--- Last modification: -
--- Version: 1.0
-
 LIBRARY ieee;
 USE ieee.std_logic_1164.all; 
 USE ieee.numeric_std.all;
