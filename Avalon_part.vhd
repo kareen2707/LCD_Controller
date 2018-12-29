@@ -19,7 +19,7 @@ entity Avalon_part is
 		
         --Signals connected to FIFO
 		
-		FIFO_Almost_full		:	in std_logic;
+		FIFO_Almost_full	:	in std_logic;
 		WrFIFO				: 	out std_logic;
 		WrData				:	out std_logic_vector(31 downto 0);
 		
@@ -72,22 +72,30 @@ architecture behavioural of Avalon_part is
 		DataLength			: 	in unsigned(31 downto 0);
 		BurstCount			: 	in unsigned(1 downto 0);
 		Start		 		:	in std_logic; -- Maybe we don't need it
-		Currently_writing		:	in std_logic; 
+		Currently_writing	:	in std_logic; 
 		Reading	 			:	out std_logic;
 		
 		--Signals connected to FIFO
 		
-		FIFO_Almost_full		:	in std_logic;
+		FIFO_Almost_full	:	in std_logic;
 		WrFIFO				: 	out std_logic;
 		WrData				:	out std_logic_vector(31 downto 0);
 		
 		
 		--Avalon Master Signals
-		AM_WaitRequest			: 	in std_logic;
-		AM_ReadDataValid 		:	in std_logic;
+		AM_WaitRequest		: 	in std_logic;
+		AM_ReadDataValid 	:	in std_logic;
 		AM_ReadData			:	in std_logic_vector(31 downto 0);
 		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_Read 			:	out std_logic;
-		AM_BurstCount 			:	out std_logic_vector(1 downto 0)
+		AM_BurstCount 	    :	out std_logic_vector(1 downto 0)
     );
     end component;
+
+    -- Auxiliar signals used for interconnecting components
+
+    signal aux_Address		        : unsigned(31 downto 0);
+	signal aux_Length		        : unsigned (31 downto 0);
+    signal aux_BurstCount	        : unsigned (1 downto 0);
+    signal aux_Currently_writing    : std_logic;
+    signal aux_Reading              : std_logic; 
