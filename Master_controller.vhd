@@ -41,7 +41,7 @@ architecture behavioural of Registers is
 -- State definition
 
 type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, AcqData );
-signal CurrentState : state;
+signal CurrentState, NextState : state;
 
 -- Auxiliar constants and signals 
 
@@ -50,74 +50,89 @@ signal en_count 	: std_logic;
 signal counter 		: integer range 0 to burstsize-1 :=0; -- Counter used for AM_ReadDataValid	
 	
 Begin
-	
-	AM_process: Process (Clk, Reset_n)
-	Begin
+
+
+	NextState_process: Process(Clk, Reset_n)
+	begin
 		if Reset_n = '0' then
-			CurrentState <= idle;
-			Reading <= '0';
-			WrFIFO <= '0';
-			WrData <= (others => '0');
-			AM_Address <= (others => '0');
-			AM_BurstCount <= (others => '0');
-			AM_Read <= '0';
-			
+			CurrentState <= Idle;
 		elsif rising_edge(Clk) then
-		 
-			case CurrentState is
-				when Idle =>
-					if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
-						CurrentState <= WaitPermission;
-					end if;
-
-				when WaitPermission =>
-					if Currently_writing = '0' then
-						CurrentState <= WaitFifo;
-						AM_Address <= std_logic_vector(Address);
-						AM_BurstCount <= std_logic_vector(BurstCount);
-					end if;
-
-				when WaitFifo =>
-
-					if FIFO_Almost_full = '0' then 
-						CurrentState <= WaitData;
-						WrFIFO <= '1';					--Notifying we want to write into the FIFO
-						AM_Read <= '1';					--Initializing the reading process
-						Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
-					end if;
-				
-				when WaitData =>
-
-					if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
-						CurrentState <= WriteData;
-						WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-					end if;
-			
-				when WriteData =>
-
-					if AM_WaitRequest = '0' then
-						CurrentState <= AcqData;
-						AM_Read <= '0';
-						WrFIFO <= '0';
-					end if;
-
-				when AcqData =>
-
-					if AM_ReadDataValid = '0' then
-						CurrentState <= WaitPermission;
-						Reading <= '0';
-						if DataLength /= 1 then
-							Address <= Address + 1;
-							DataLength <= DataLength - 1;
-						else
-							Address <= Address;
-							DataLength <= DataLength;
-						end if;
-					end if;
-			end case;
-
+			CurrentState <= NextState;
+			--if en_count = '1' then
+			--	counter <= counter + 1;
+			--else
+			--	counter <= 0;
+			--end if;
 		end if;
+	end process NextState_process;
+
+	
+	AM_process: Process (CurrentState, DataLength, FIFO_Almost_full, AM_ReadDataValid, AM_WaitRequest)
+	Begin
 		
+		NextState <= CurrentState;
+
+		WrFIFO <= '0';
+		AM_Read <= '0';
+		AM_Address <= (others => '0');
+		AM_BurstCount <= (others => '0');
+		WrData <= (others => '0');
+		Reading <= '0';
+
+		case CurrentState is
+			when Idle =>
+				if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
+					CurrentState <= WaitPermission;
+				end if;
+
+			when WaitPermission =>
+				if Currently_writing = '0' then
+					CurrentState <= WaitFifo;
+					AM_Address <= std_logic_vector(Address);
+					AM_BurstCount <= std_logic_vector(BurstCount);
+				end if;
+
+			when WaitFifo =>
+
+				if FIFO_Almost_full = '0' then 
+					CurrentState <= WaitData;
+					WrFIFO <= '1';					--Notifying we want to write into the FIFO
+					AM_Read <= '1';					--Initializing the reading process
+					Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
+				end if;
+				
+			when WaitData =>
+
+				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
+					counter <= counter + 1;			--Counting the times that ReadDataValid is high
+					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
+					if counter = burstsize then
+						CurrentState <= WriteData;
+					end if;						
+				end if;
+			
+			when WriteData =>
+
+				if AM_WaitRequest = '0' then
+					CurrentState <= AcqData;
+					AM_Read <= '0';
+					WrFIFO <= '0';
+				end if;
+
+			when AcqData =>
+
+				if AM_ReadDataValid = '0' then
+					CurrentState <= WaitPermission;
+					Reading <= '0';
+					if DataLength /= 1 then
+						Address <= Address + 1;
+						DataLength <= DataLength - 1;
+					else
+						Address <= Address;
+						DataLength <= DataLength;
+					end if;
+				end if;
+		end case;	
 	end process AM_process;
 	
 end ;
