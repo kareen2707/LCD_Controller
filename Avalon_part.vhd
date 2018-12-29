@@ -63,4 +63,31 @@ architecture behavioural of Avalon_part is
     );
     end component;
 
-    
+    component Master_controller port(
+        Clk	:	in  std_logic;
+		Reset_n	: 	in std_logic;
+		
+		--Configuration registers
+		Address				: 	in unsigned(31 downto 0);
+		DataLength			: 	in unsigned(31 downto 0);
+		BurstCount			: 	in unsigned(1 downto 0);
+		Start		 		:	in std_logic; -- Maybe we don't need it
+		Currently_writing		:	in std_logic; 
+		Reading	 			:	out std_logic;
+		
+		--Signals connected to FIFO
+		
+		FIFO_Almost_full		:	in std_logic;
+		WrFIFO				: 	out std_logic;
+		WrData				:	out std_logic_vector(31 downto 0);
+		
+		
+		--Avalon Master Signals
+		AM_WaitRequest			: 	in std_logic;
+		AM_ReadDataValid 		:	in std_logic;
+		AM_ReadData			:	in std_logic_vector(31 downto 0);
+		AM_Address			: 	out std_logic_vector(31 downto 0);
+		AM_Read 			:	out std_logic;
+		AM_BurstCount 			:	out std_logic_vector(1 downto 0)
+    );
+    end component;
