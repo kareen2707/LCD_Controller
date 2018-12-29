@@ -1,7 +1,6 @@
 -- Master_Controller submodule
 -- Creation date: 12/12/2018
--- Last modification: 29/12/2018
--- Version: 2.0
+-- Version: 1.0
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -33,7 +32,7 @@ entity Master_Controller is
 		AM_ReadData			:	in std_logic_vector(31 downto 0);
 		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_Read 			:	out std_logic;
-		AM_BurstCount 			:	out std_logic_vector(1 downto 0));
+		AM_BurstCount 			:	out std_logic_vector(2 downto 0));
 end entity Master_Controller;
 
 architecture behavioural of Master_Controller is

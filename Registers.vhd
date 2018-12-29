@@ -1,10 +1,13 @@
 -- Register submodule
 -- Creation date: 12/12/2018
--- Version: 1.0
+-- Last modification: 29/12/2018
+-- Version: 2.0
 
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity Registers is
 	port(
@@ -23,7 +26,7 @@ entity Registers is
 		
 		Reading				: 	in std_logic;
 		AcqAddress			: 	out unsigned(31 downto 0);
-		AcqBurstCount		:	out unsigned(31 downto 0);
+		AcqBurstCount		:	out unsigned(1 downto 0);
 		AcqLength			: 	out unsigned(31 downto 0);
 		Start				: 	out std_logic; 
 		Currently_writing	:	out std_logic; 
@@ -36,6 +39,12 @@ entity Registers is
 end entity Registers;
 
 architecture behavioural of Registers is
+
+	Signal TmpAddress		: unsigned(31 downto 0);
+	Signal TmpLength		: unsigned (31 downto 0);
+	Signal TmpBurstCount	: unsigned (1 downto 0);
+	Signal Tmp_CmdAddress	: unsigned(31 downto 0);
+	Signal Tmp_CmdData		: unsigned (31 downto 0);
 	
 	
 Begin
@@ -53,29 +62,36 @@ Begin
 		 	if AS_ChipSelect = '1' then
 				if AS_Write = '1' then
 					case AS_Address is
-						when "000" => AcqAddress <= unsigned(AS_WriteData);
-						when "001" => AcqLength <= unsigned(AS_WriteData);
-						when "010" => AcqBurstCount <= unsigned(AS_WriteData(1 downto 0));
+						when "000" => TmpAddress <= unsigned(AS_WriteData);
+						when "001" => TmpLength <= unsigned(AS_WriteData);
+						when "010" => TmpBurstCount <= unsigned(AS_WriteData(1 downto 0));
 						when "011" => Start <= AS_WriteData(0);
-						when "100" => Cmd_Address <= unsigned(AS_WriteData);
-						when "101" => Cmd_Data <= unsigned(AS_WriteData);
+						when "100" => Tmp_CmdAddress <= unsigned(AS_WriteData);
+						when "101" => Tmp_CmdData <= unsigned(AS_WriteData);
 						when "110" => Currently_writing <= AS_WriteData(0);
+						when others => null;
 					end case;
+					AcqAddress <= TmpAddress;
+					AcqLength <= TmpLength;
+					AcqBurstCount <= TmpBurstCount;
+					Cmd_Address <= Tmp_CmdAddress;
+					Cmd_Data <= Tmp_CmdData;
 				end if;
 			
 				if AS_Read = '1' then
 					case AS_Address is
-						when "000" => AS_ReadData <= std_logic_vector(AcqAddress);
-						when "001" => AS_ReadData <= std_logic_vector(AcqLength);
-						when "010" => AS_ReadData <= std_logic_vector(AcqBurstCount);
-						when "011" => AS_ReadData(0) <= Start;
-						when "100" => AS_ReadData <= std_logic_vector(Cmd_Address);
-						when "101" => AS_ReadData <= std_logic_vector(Cmd_Data);
+						when "000" => AS_ReadData <= std_logic_vector(TmpAddress);
+						when "001" => AS_ReadData <= std_logic_vector(TmpLength);
+						when "010" => AS_ReadData(1 downto 0) <= std_logic_vector(TmpBurstCount);
+						--when "011" => AS_ReadData(0) <= Start;
+						when "100" => AS_ReadData <= std_logic_vector(Tmp_CmdAddress);
+						when "101" => AS_ReadData <= std_logic_vector(Tmp_CmdData);
 						when "110" => AS_ReadData(0) <= not(Reading); 
 						when "111" => AS_ReadData(0) <= Ack_Write;
+						when others => null;
 					end case;
 				end if;
 			end if;
 		end if;	
-	end process acquisition_process;
+	end process AS_process;
 end ;
