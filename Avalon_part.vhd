@@ -124,7 +124,7 @@ architecture behavioural of Avalon_part is
 		    AcqBurstCount	=> aux_BurstCount,	
 		    AcqLength	=> aux_Length,	
 		    Start	=> aux_Start,	 
-		    Currently_writing	=> Currently_writing,	
+		    Currently_writing	=> aux_Currently_writing,	
 		    --Signals connected to LCD_Control
 		    Cmd_Address	=> Cmd_Address,
 		    Cmd_Data => Cmd_Data,
@@ -134,5 +134,24 @@ architecture behavioural of Avalon_part is
 
         Master_controller_comp : Master_controller
         port map(
-            
-        )
+            Clk	=> Clk,
+            Reset_n	=> Reset_n,
+            --Configuration registers
+            Address	=> aux_Address,
+            DataLength => aux_Length,
+            BurstCount => aux_BurstCount,
+            Start => aux_Start,
+            Currently_writing => aux_Currently_writing, 
+            Reading => aux_Reading,
+            --Signals connected to FIFO
+            FIFO_Almost_full => FIFO_Almost_full,
+            WrFIFO	=> WrFIFO,
+            WrData	=> 	WrData,		
+            --Avalon Master Signals
+            AM_WaitRequest	=> 	AM_WaitRequest,
+            AM_ReadDataValid => AM_ReadDataValid,	
+            AM_ReadData	=> AM_ReadData,		
+            AM_Address => AM_Address,			
+            AM_Read => AM_Read		
+            AM_BurstCount => AM_BurstCount	    
+        );
