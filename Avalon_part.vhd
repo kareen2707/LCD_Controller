@@ -21,7 +21,12 @@ entity Avalon_part is
 		
 		FIFO_Almost_full	:	in std_logic;
 		WrFIFO				: 	out std_logic;
-		WrData				:	out std_logic_vector(31 downto 0);
+        WrData				:	out std_logic_vector(31 downto 0);
+        
+        --Signals connected to LCD_Control
+		Cmd_Address			:	out unsigned(31 downto 0);
+		Cmd_Data			: 	out unsigned(31 downto 0);
+		Ack_Write			: 	in std_logic; 
 		
 		--Avalon Master Signals
 		AM_WaitRequest		: 	in std_logic;
@@ -99,3 +104,35 @@ architecture behavioural of Avalon_part is
     signal aux_BurstCount	        : unsigned (1 downto 0);
     signal aux_Currently_writing    : std_logic;
     signal aux_Reading              : std_logic; 
+    signal aux_Start                : std_logic;
+    signal aux_Ack_write            : std_logic;
+
+    begin
+        Registers_comp : Registers
+        port map (
+            Clk => Clk,
+            Reset_n => Reset_n,
+            AS_Address => AS_Address,
+		    AS_ChipSelect => AS_ChipSelect,
+		    AS_Write => AS_Write,
+		    AS_Read => AS_Read,
+		    AS_WriteData => AS_WriteData,
+            AS_ReadData => AS_ReadData,
+            --Signals connected to Master Controller
+            Reading	=> aux_Reading,
+		    AcqAddress	=> aux_Address,		
+		    AcqBurstCount	=> aux_BurstCount,	
+		    AcqLength	=> aux_Length,	
+		    Start	=> aux_Start,	 
+		    Currently_writing	=> Currently_writing,	
+		    --Signals connected to LCD_Control
+		    Cmd_Address	=> Cmd_Address,
+		    Cmd_Data => Cmd_Data,
+		    Ack_Write => aux_Ack_write
+
+        );
+
+        Master_controller_comp : Master_controller
+        port map(
+            
+        )
