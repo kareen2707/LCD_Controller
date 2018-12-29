@@ -42,7 +42,12 @@ architecture behavioural of Registers is
 
 type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, AcqData );
 signal CurrentState : state;
-	
+
+-- Auxiliar constants and signals 
+
+constant burstsize	: integer := to_integer(BurstCount);
+signal en_count 	: std_logic;
+signal counter 		: integer range 0 to burstsize-1 :=0; -- Counter used for AM_ReadDataValid	
 	
 Begin
 	
@@ -83,7 +88,7 @@ Begin
 				
 				when WaitData =>
 
-					if AM_ReadDataValid = '1' then	--We have readed a new data from SRAM
+					if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
 						CurrentState <= WriteData;
 						WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
 					end if;
