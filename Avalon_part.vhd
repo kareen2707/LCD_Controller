@@ -40,7 +40,7 @@ entity Avalon_part is
 		AM_ReadData			:	in std_logic_vector(31 downto 0);
 		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_Read 			:	out std_logic;
-		AM_BurstCount 		:	out std_logic_vector(1 downto 0)
+		AM_BurstCount 		:	out std_logic_vector(2 downto 0)
     );
 end Avalon_part;
 
@@ -62,7 +62,7 @@ architecture behavioural of Avalon_part is
 		
 		Reading				: 	in std_logic;
 		AcqAddress			: 	out unsigned(31 downto 0);
-		AcqBurstCount		:	out unsigned(1 downto 0);
+		AcqBurstCount		:	out unsigned(2 downto 0);
 		AcqLength			: 	out unsigned(31 downto 0);
 		Start				: 	out std_logic; 
 		Currently_writing	:	out std_logic; 
@@ -81,7 +81,7 @@ architecture behavioural of Avalon_part is
 		--Configuration registers
 		Address				: 	in unsigned(31 downto 0);
 		DataLength			: 	in unsigned(31 downto 0);
-		BurstCount			: 	in unsigned(1 downto 0);
+		BurstCount			: 	in unsigned(2 downto 0);
 		Start		 		:	in std_logic; -- Maybe we don't need it
 		Currently_writing	:	in std_logic; 
 		Reading	 			:	out std_logic;
@@ -99,7 +99,7 @@ architecture behavioural of Avalon_part is
 		AM_ReadData			:	in std_logic_vector(31 downto 0);
 		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_Read 			:	out std_logic;
-		AM_BurstCount 	    :	out std_logic_vector(1 downto 0)
+		AM_BurstCount 	    :	out std_logic_vector(2 downto 0)
     );
     end component;
 
@@ -107,7 +107,7 @@ architecture behavioural of Avalon_part is
 
     signal aux_Address		        : unsigned(31 downto 0);
 	signal aux_Length		        : unsigned (31 downto 0);
-    signal aux_BurstCount	        : unsigned (1 downto 0);
+    signal aux_BurstCount	        : unsigned (2 downto 0);
     signal aux_Currently_writing    : std_logic;
     signal aux_Reading              : std_logic; 
     signal aux_Start                : std_logic;
