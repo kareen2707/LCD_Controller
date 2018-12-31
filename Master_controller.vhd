@@ -15,7 +15,7 @@ entity Master_Controller is
 		--Configuration registers
 		Address				: 	in unsigned(31 downto 0);
 		DataLength			: 	in unsigned(31 downto 0);
-		BurstCount			: 	in unsigned(1 downto 0);
+		BurstCount			: 	in unsigned(2 downto 0);
 		Start		 		:	in std_logic; -- Maybe we don't need it
 		Currently_writing		:	in std_logic; 
 		Reading	 			:	out std_logic;
@@ -33,7 +33,7 @@ entity Master_Controller is
 		AM_ReadData			:	in std_logic_vector(31 downto 0);
 		AM_Address			: 	out std_logic_vector(31 downto 0);
 		AM_Read 			:	out std_logic;
-		AM_BurstCount 			:	out std_logic_vector(1 downto 0));
+		AM_BurstCount 			:	out std_logic_vector(2 downto 0));
 end entity Master_Controller;
 
 architecture behavioural of Master_Controller is
@@ -50,7 +50,7 @@ signal en_count 		: std_logic;
 signal counter 			: integer range 0 to burstsize-1 :=0; -- Counter used for AM_ReadDataValid	
 Signal TmpAddress		: unsigned(31 downto 0);
 Signal TmpLength		: unsigned (31 downto 0);
-Signal TmpBurstCount		: unsigned (1 downto 0);
+Signal TmpBurstCount	: unsigned (2 downto 0);
 
 	
 Begin
