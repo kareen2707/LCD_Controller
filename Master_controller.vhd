@@ -103,7 +103,12 @@ Begin
 				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
 					counter <= counter + 1;			--Counting the times that ReadDataValid is high
 					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-					CurrentState <= WriteData;						
+					if counter < burstsize then
+						CurrentState <= WriteData;
+					else
+						counter <= 0;
+						CurrentState <= AcqData;
+					end if;						
 				end if;
 			
 			when WriteData =>
@@ -117,9 +122,6 @@ Begin
 			when AcqData =>
 
 				if AM_ReadDataValid = '0' then
-					if counter = burstsize then
-						counter <= 0;
-					end if;
 					CurrentState <= WaitPermission;
 					Reading <= '0';
 					if TmpLength /= 1 then
