@@ -26,7 +26,7 @@ entity Registers is
 		
 		Reading				: 	in std_logic;
 		AcqAddress			: 	out unsigned(31 downto 0);
-		AcqBurstCount		:	out unsigned(1 downto 0);
+		AcqBurstCount		:	out unsigned(2 downto 0);
 		AcqLength			: 	out unsigned(31 downto 0);
 		Start				: 	out std_logic; 
 		Currently_writing	:	out std_logic; 
@@ -42,7 +42,7 @@ architecture behavioural of Registers is
 
 	Signal TmpAddress		: unsigned(31 downto 0);
 	Signal TmpLength		: unsigned (31 downto 0);
-	Signal TmpBurstCount	: unsigned (1 downto 0);
+	Signal TmpBurstCount	: unsigned (2 downto 0);
 	Signal Tmp_CmdAddress	: unsigned(31 downto 0);
 	Signal Tmp_CmdData		: unsigned (31 downto 0);
 	
@@ -52,11 +52,11 @@ Begin
 	AS_process: Process (Clk, Reset_n)
 	Begin
 		if Reset_n = '0' then
-			AcqAddress <= (others =>'0');
-			AcqLength <= (others =>'0');
-			AcqBurstCount <= (others =>'0');
-			Cmd_Address <= (others =>'0');
-			Cmd_Data <= (others =>'0');
+			TmpAddress <= (others =>'0');
+			TmpLength <= (others =>'0');
+			TmpBurstCount <= (others =>'0');
+			Tmp_CmdAddress <= (others =>'0');
+			Tmp_CmdData <= (others =>'0');
 			
 		elsif rising_edge(Clk) then
 		 	if AS_ChipSelect = '1' then
@@ -64,25 +64,20 @@ Begin
 					case AS_Address is
 						when "000" => TmpAddress <= unsigned(AS_WriteData);
 						when "001" => TmpLength <= unsigned(AS_WriteData);
-						when "010" => TmpBurstCount <= unsigned(AS_WriteData(1 downto 0));
+						when "010" => TmpBurstCount <= unsigned(AS_WriteData(2 downto 0));
 						when "011" => Start <= AS_WriteData(0);
 						when "100" => Tmp_CmdAddress <= unsigned(AS_WriteData);
 						when "101" => Tmp_CmdData <= unsigned(AS_WriteData);
 						when "110" => Currently_writing <= AS_WriteData(0);
 						when others => null;
 					end case;
-					AcqAddress <= TmpAddress;
-					AcqLength <= TmpLength;
-					AcqBurstCount <= TmpBurstCount;
-					Cmd_Address <= Tmp_CmdAddress;
-					Cmd_Data <= Tmp_CmdData;
 				end if;
 			
 				if AS_Read = '1' then
 					case AS_Address is
 						when "000" => AS_ReadData <= std_logic_vector(TmpAddress);
 						when "001" => AS_ReadData <= std_logic_vector(TmpLength);
-						when "010" => AS_ReadData(1 downto 0) <= std_logic_vector(TmpBurstCount);
+						when "010" => AS_ReadData(2 downto 0) <= std_logic_vector(TmpBurstCount);
 						--when "011" => AS_ReadData(0) <= Start;
 						when "100" => AS_ReadData <= std_logic_vector(Tmp_CmdAddress);
 						when "101" => AS_ReadData <= std_logic_vector(Tmp_CmdData);
@@ -94,4 +89,9 @@ Begin
 			end if;
 		end if;	
 	end process AS_process;
+	AcqAddress <= TmpAddress;
+	AcqLength <= TmpLength;
+	AcqBurstCount <= TmpBurstCount;
+	Cmd_Address <= Tmp_CmdAddress;
+	Cmd_Data <= Tmp_CmdData;
 end ;
