@@ -88,9 +88,9 @@ BEGIN
 	for Z in 1 to 49
 	loop
 	    clk  <= '1'  ;
-	   wait for 20 ns ;
+	   wait for 10 ns ;
 	    clk  <= '0'  ;
-	   wait for 20 ns ;
+	   wait for 10 ns ;
 -- 990 ns, repeat pattern in loop.
 	end  loop;
 	 clk  <= '1'  ;
@@ -103,12 +103,20 @@ BEGIN
 -- "Rest of signals"
 -- Start Time = 0 ns, End Time = 1 us
   Process
-	Begin 					--Here the PWM must be '0' cause the nReset is activated
+	Begin 					
       	 AS_ChipSelect <= '0' ; 
       	 AS_WriteData  <= (others => '0'); 
       	 Reset_n  <= '0' ; 
       	 AS_Address  <= (others => '0') ; 
-      	 AS_Write  <= '0';
+         AS_Write  <= '0';
+         AS_Read <= '0';
+         FIFO_almost_full <= '0';
+         Ack_write <= '0';
+         AM_ReadDataValid <='0';
+         AM_WaitRequest <= '1';
+         WrData <= (others => '0') ; 
+         WrFIFO <= '0';
+
 
 	wait for 30 ns ; 
 	 
