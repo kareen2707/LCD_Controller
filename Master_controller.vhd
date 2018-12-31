@@ -47,7 +47,7 @@ signal CurrentState: state;
 
 constant burstsize		: integer := 4;
 signal en_count 		: std_logic;
-signal counter 			: integer range 0 to burstsize-1 :=0; -- Counter used for AM_ReadDataValid	
+signal counter 			: integer range 0 to burstsize :=0; -- Counter used for AM_ReadDataValid	
 Signal TmpAddress		: unsigned(31 downto 0);
 Signal TmpLength		: unsigned (31 downto 0);
 Signal TmpBurstCount	: unsigned (2 downto 0);
@@ -60,8 +60,6 @@ Begin
 	Begin
 
 	if (Reset_n = '0') then
-
-		CurrentState <= Idle;
 		WrFIFO <= '0';
 		AM_Read <= '0';
 		TmpAddress <= (others => '0');
@@ -69,19 +67,22 @@ Begin
 		TmpLength <= (others => '0');
 		WrData <= (others => '0');
 		Reading <= '0';
-
+		CurrentState <= Idle;
+		
 	elsif rising_edge(Clk) then
 		
 		case CurrentState is
 			when Idle =>
-				if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
+
+				if Start = '1' then
+				--if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
 					TmpAddress <= Address;
 					TmpLength <= DataLength;
 					TmpBurstCount <= BurstCount;
 					CurrentState <= WaitPermission;
 				end if;
 
-				when WaitPermission =>
+			when WaitPermission =>
 				if Currently_writing = '0' then
 					CurrentState <= WaitFifo;
 					AM_Address <= std_logic_vector(TmpAddress);
@@ -102,10 +103,7 @@ Begin
 				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
 					counter <= counter + 1;			--Counting the times that ReadDataValid is high
 					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-					if counter = burstsize then
-						counter <= 0;
-						CurrentState <= WriteData;
-					end if;						
+					CurrentState <= WriteData;						
 				end if;
 			
 			when WriteData =>
@@ -119,6 +117,9 @@ Begin
 			when AcqData =>
 
 				if AM_ReadDataValid = '0' then
+					if counter = burstsize then
+						counter <= 0;
+					end if;
 					CurrentState <= WaitPermission;
 					Reading <= '0';
 					if TmpLength /= 1 then
