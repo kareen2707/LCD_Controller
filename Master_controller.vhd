@@ -54,9 +54,19 @@ Signal TmpBurstCount	: unsigned (2 downto 0);
 
 	
 Begin
-	WrFIFO <= '0';
+	Count_process: Process(Clk)
+	begin 
+		if rising_edge(clk) then
+			if AM_ReadDataValid = '1' then 
+				counter <= counter-1;
+				if counter = 0 then
+					counter <= 4;
+				end if;
+			end if;
+	  end if;
+	end process;
 
-	AM_process: Process (Clk, Reset_n)
+	AM_process: Process (Clk, Reset_n, counter)
 	Begin
 
 	if (Reset_n = '0') then
@@ -101,12 +111,11 @@ Begin
 			when WaitData =>
 
 				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
-					counter <= counter - 1;			--Counting the times that ReadDataValid is high
+					--counter <= counter - 1;			--Counting the times that ReadDataValid is high
 					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
 					if counter = 0 then
 						CurrentState <= AcqData;
 					else
-						counter <= 4;
 						CurrentState <= WriteData;
 					end if;						
 				end if;
