@@ -41,11 +41,11 @@ architecture behavioural of Master_Controller is
 -- State definition
 
 type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, AcqData );
-signal CurrentState: state;
+signal CurrentState,NextState: state;
 
 -- Auxiliar constants and signals 
 
-constant burstsize		: integer := 3;
+constant burstsize		: integer := 4;
 --burstsize <= to_integer(BurstCount);
 constant max_length		: integer := 2;
 --max_lenght <= to_integer(DataLength);
@@ -59,41 +59,55 @@ Signal TmpBurstCount	: unsigned (2 downto 0);
 
 	
 Begin
-	Count_process: Process(Clk)
+	NS_process: Process(Clk, Reset_n)
 	begin 
-		if rising_edge(clk) then
-			if AM_ReadDataValid = '1' then 
-				counter <= counter-1;
-				if counter = 0 then
-					counter <= 4;
+		if Reset_n = '0' then
+			CurrentState <= Idle;
+		elsif rising_edge(clk) then
+			CurrentState <= NextState;
+			if en_burstcount = '1' then 
+				burstcounter <= burstcounter+1;
+			else 
+				burstcounter <= 0;
+			end if;
+
+			if burstcounter = burstsize then
+				burstcounter <= 0;
+				if en_datacount = '1' then
+					datacounter <= datacounter + 1;
+				else
+					datacounter <= 0;
 				end if;
+			end if;
+
+			if en_datacount = '0' then
+				datacounter <= 0;
 			end if;
 	  end if;
 	end process;
 
-	AM_process: Process (Clk, Reset_n, counter)
+	AM_process: Process (CurrentState, Start, Currently_writing, FIFO_almost_full, burstcounter, datacounter, AM_WaitRequest)
+
 	Begin
 
-	if (Reset_n = '0') then
-		WrFIFO <= '0';
-		AM_Read <= '0';
-		TmpAddress <= (others => '0');
-		TmpBurstCount <= (others => '0');
-		TmpLength <= (others => '0');
-		WrData <= (others => '0');
-		Reading <= '0';
-		CurrentState <= Idle;
-		
-	elsif rising_edge(Clk) then
-		
-		case CurrentState is
-			when Idle =>
+	NextState <= CurrentState;
+	en_burstcount <= '0';
+	en_datacount <= '0';
+	Reading <= '0';
+	AM_Read <= '0';
+	WrData <= '0';
+	WrData <= (others => '0');
+	TmpAddress <= (others => '0');
+	TmpBurstCount <= (others => '0');
+	TmpLength <= (others => '0');
 
+	case CurrentState is
+		when Idle =>
+				
 				if Start = '1' then
-				--if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
 					TmpAddress <= Address;
-					TmpLength <= DataLength;
-					TmpBurstCount <= BurstCount;
+					--TmpLength <= DataLength;
+					--TmpBurstCount <= BurstCount;
 					CurrentState <= WaitPermission;
 				end if;
 
@@ -116,41 +130,32 @@ Begin
 			when WaitData =>
 
 				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
-					--counter <= counter - 1;			--Counting the times that ReadDataValid is high
-					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-					if counter = 0 then
-						CurrentState <= AcqData;
-					else
-						CurrentState <= WriteData;
-					end if;						
+					en_burstcount <= '1';
+					en_datacount <= '1';
+					WrData <= AM_ReadData;
+					if datacounter = max_length then
+						TmpAddress <= TmpAddress + 1;
+						Reading <= '0';
+						AM_Read <= '0';
+						WrFIFO <= '0';
+						NextState <= WaitPermission;
+					elsif burstcounter = burstsize then
+						NextState <= WriteData;
+					end if;
+
 				end if;
 			
 			when WriteData =>
 
 				if AM_WaitRequest = '0' then
-					CurrentState <= AcqData;
 					AM_Read <= '0';
 					WrFIFO <= '0';
-				end if;
-
-			when AcqData =>
-
-				if AM_ReadDataValid = '0' then
-					CurrentState <= WaitPermission;
 					Reading <= '0';
-					if TmpLength /= 1 then
-						TmpAddress <= TmpAddress + 1;
-						TmpLength <= TmpLength - 1;
-					else
-						TmpAddress <= Address;
-						TmpLength <= DataLength;
-					end if;
+					CurrentState <= WaitPermission;
 				end if;
-
 			
-		end case;	
+	end case;	
 
-	end if;
 
 end process AM_process;
 	
