@@ -86,7 +86,7 @@ Begin
 	  end if;
 	end process;
 
-	AM_process: Process (CurrentState, Start, Currently_writing, FIFO_almost_full, burstcounter, datacounter, AM_WaitRequest)
+	AM_process: Process (CurrentState, Start, AM_ReadDataValid, Currently_writing, FIFO_almost_full, burstcounter, datacounter, AM_WaitRequest)
 
 	Begin
 
@@ -133,15 +133,15 @@ Begin
 				en_burstcount <= '1';
 				en_datacount <= '1';
 				WrData <= AM_ReadData;
-				if datacounter = max_length then
-					TmpAddress <= TmpAddress + 1;
-					Reading <= '0';
-					AM_Read <= '0';
-					WrFIFO <= '0';
-					NextState <= WaitPermission;
-				elsif burstcounter = burstsize then
+				--if datacounter = max_length then
+				--	TmpAddress <= TmpAddress + 1;
+				--	Reading <= '0';
+				--	AM_Read <= '0';
+				--	WrFIFO <= '0';
+				--	NextState <= Idle;
+				--elsif burstcounter = burstsize then
 					NextState <= WriteData;
-				end if;
+				--end if;
 
 			end if;
 			
@@ -155,7 +155,6 @@ Begin
 			end if;
 			
 	end case;	
-
 
 end process AM_process;
 	
