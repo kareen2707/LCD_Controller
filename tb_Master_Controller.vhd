@@ -94,65 +94,60 @@ BEGIN
 -- "Rest of signals"
 -- Start Time = 0 ns, End Time = 1 us
   Process
-	Begin 					
-      	  
-      	 Reset_n  <= '1' ; 
-      	 Address  <= (others => '0') ; 
-	 DataLength <= (others => '0') ; 
-         BurstCount <= (others => '0') ; 
-         Start <= '0';
-	 Currently_writing <= '1';
-
-         FIFO_almost_full <= '0';
-         AM_ReadData <= (others => '0') ;
-         AM_ReadDataValid <='0';
-         AM_WaitRequest <= '1';
-
-         wait for 10 ns ; 
-	 
-         Reset_n  <= '0' ; 
-
-	 wait for 20 ns;
-	 Reset_n <= '1';
-         Address  <= X"0000_0004";	-- Origin address from SDRAM     
-         DataLength <= X"0000_0002";	-- Twice reading process
-	 BurstCount <= "100";		-- BurstCount = 4
-	 AM_ReadDataValid <= '0';
-	
-	 wait for 20 ns;
-	 AM_WaitRequest <= '0';
-
-	 wait for 20 ns;   		-- Next reading process fron a differente base address
-	   Address  <= X"0000_0008";	-- Origin address from SDRAM     
-	   BurstCount <= "011";		-- BurstCount = 3         
-
-	 wait for 30 ns;
-	  --AM_WaitRequest <= '0';
-	 AM_ReadData <= X"0000_0001";
-	 AM_ReadDataValid <= '1';
-     
-         wait for 20 ns;                -- Second, the length of lectures we want to do 
-         -- Start  <= '0'; 
-	 -- Currently_writing <= '0';      
-     	 -- Reset_n  <= '1' ; 
-	 AM_ReadData <= X"0000_0002";
-	 AM_ReadDataValid <= '1';
+  Begin
+  Reset_n  <= '1' ; 
+  Address  <= (others => '0') ; 
+	DataLength <= (others => '0') ; 
+  BurstCount <= (others => '0') ; 
+  Start <= '0';
+	Currently_writing <= '1';
+  FIFO_almost_full <= '0';
+  AM_ReadData <= (others => '0') ;
+  AM_ReadDataValid <='0';
+  AM_WaitRequest <= '1';
+  
+  wait for 10 ns ;
+  Reset_n  <= '0' ; 
 
 	wait for 20 ns;
-	 AM_ReadData <= X"0000_0000";
-	 AM_ReadDataValid <= '0';
+	Reset_n <= '1';
+  Address  <= X"0000_0004";	-- Origin address from SDRAM     
+  DataLength <= X"0000_0002";	-- Twice reading process
+  BurstCount <= "100";		-- BurstCount = 4
+  Start <= '1';
+  Currently_writing <= '0';
+	AM_ReadDataValid <= '0';
+	
+	wait for 20 ns;
+	AM_WaitRequest <= '0';
 
-	 wait for 10 ns;
-	 AM_ReadData <= X"0000_0003";
-	 AM_ReadDataValid <= '1';
+	wait for 20 ns;   		-- Next reading process fron a differente base address
+	Address  <= X"0000_0008";	-- Origin address from SDRAM     
+	BurstCount <= "011";		-- BurstCount = 3         
+
+	wait for 30 ns;
+	AM_ReadData <= X"0000_0001";
+	AM_ReadDataValid <= '1';
+     
+  wait for 20 ns;                -- Second, the length of lectures we want to do 
+	AM_ReadData <= X"0000_0002";
+	AM_ReadDataValid <= '1';
+
+	--wait for 20 ns;
+	--AM_ReadData <= X"0000_0000";
+	--AM_ReadDataValid <= '0';
+
+	wait for 20 ns;
+	AM_ReadData <= X"0000_0003";
+	AM_ReadDataValid <= '1';
 	 
-	 wait for 20 ns;
-	 AM_ReadData <= X"0000_0004";
-	 AM_ReadDataValid <= '1';
+	wait for 20 ns;
+	AM_ReadData <= X"0000_0004";
+	AM_ReadDataValid <= '1';
 
-	 wait for 20 ns;
-	 AM_ReadData <= X"0000_0000";
-	 AM_ReadDataValid <= '0';
+	wait for 20 ns;
+	AM_ReadData <= X"0000_0000";
+	AM_ReadDataValid <= '0';
                       
 	wait;
  End Process;
