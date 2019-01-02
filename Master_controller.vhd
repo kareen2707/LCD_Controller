@@ -1,7 +1,6 @@
-
 -- Master_Controller submodule
--- Creation date: 12/1e/2018
--- Last modification: 2/1/2019
+-- Creation date: 12/12/2018
+-- Last modification: 1/1/2019
 -- Version: 3.0
 
 library ieee;
@@ -69,6 +68,7 @@ Begin
 			if en_burstcount = '1' then 
 				burstcounter <= burstcounter+1;
 			else 
+				burstcounter <= 0;
 			end if;
 
 			if burstcounter = burstsize then
@@ -83,42 +83,6 @@ Begin
 			--if en_datacount = '0' then
 			--	datacounter <= 0;
 			--end if;
-			if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
-				en_burstcount <= '1';
-				en_datacount <= '1';
-				WrData <= AM_ReadData;
-				--if datacounter = max_length then
-				--	TmpAddress <= TmpAddress + 1;
-				--	Reading <= '0';
-				--	AM_Read <= '0';
-				--	WrFIFO <= '0';
-				--	NextState <= Idle;
-				--elsif burstcounter = burstsize then
-					NextState <= WriteData;
-				--end if;
-
-
-			end if;
-			
-		when WriteData =>
-
-			if AM_WaitRequest = '0' then
-
-			end if;
-
-			if burstcounter = burstsize then
-				burstcounter <= 0;
-				if en_datacount = '1' then
-					datacounter <= datacounter + 1;
-				else
-					datacounter <= 0;
-				end if;
-			end if;
-
-			if en_datacount = '0' then
-				datacounter <= 0;
-			end if;
-
 	  end if;
 	end process;
 
@@ -139,10 +103,27 @@ Begin
 
 	case CurrentState is
 		when Idle =>
-
 				
 			if Start = '1' then
 				TmpAddress <= Address;
+				--TmpLength <= DataLength;
+				TmpBurstCount <= BurstCount;
+				NextState <= WaitPermission;
+			end if;
+
+		when WaitPermission =>
+			if Currently_writing = '0' then
+				NextState <= WaitFifo;
+				AM_Address <= std_logic_vector(TmpAddress);
+				AM_BurstCount <= std_logic_vector(TmpBurstCount);
+			end if;
+
+		when WaitFifo =>
+
+			if FIFO_Almost_full = '0' then 
+				NextState <= WaitData;
+				WrFIFO <= '1';					--Notifying we want to write into the FIFO
+				AM_Read <= '1';					--Initializing the reading process
 				Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
 			end if;
 				
@@ -158,4 +139,23 @@ Begin
 				Reading <= '0';
 				AM_Read <= '0';
 				WrFIFO <= '0';
-				N
+				NextState <= Idle;
+			elsif burstcounter = burstsize then
+				NextState <= WriteData;
+				TmpAddress <= TmpAddress + 1;
+			end if;
+			
+		when WriteData =>
+
+			if AM_WaitRequest = '0' then
+				AM_Read <= '0';
+				WrFIFO <= '0';
+				Reading <= '0';
+				NextState <= WaitPermission;
+			end if;
+			
+	end case;	
+
+end process AM_process;
+	
+end ;
