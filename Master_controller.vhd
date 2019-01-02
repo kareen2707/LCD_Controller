@@ -1,7 +1,7 @@
 -- Master_Controller submodule
 -- Creation date: 12/12/2018
--- Last modification: 29/12/2018
--- Version: 2.0
+-- Last modification: 1/1/2019
+-- Version: 3.0
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -45,10 +45,15 @@ signal CurrentState: state;
 
 -- Auxiliar constants and signals 
 
-constant burstsize		: integer := 4;
-signal en_count 		: std_logic;
-signal counter 			: integer range 0 to burstsize :=4; -- Counter used for AM_ReadDataValid	
-Signal TmpAddress		: unsigned(31 downto 0);
+constant burstsize		: integer := 3;
+--burstsize <= to_integer(BurstCount);
+constant max_length		: integer := 2;
+--max_lenght <= to_integer(DataLength);
+signal en_burstcount 	: std_logic;
+signal en_datacount		: std_logic;
+signal burstcounter 	: integer range 0 to burstsize := 0; -- Counter used for AM_ReadDataValid	
+signal datacounter		: integer range 0 to max_length := 0;
+Signal TmpAddress		: unsigned (31 downto 0);
 Signal TmpLength		: unsigned (31 downto 0);
 Signal TmpBurstCount	: unsigned (2 downto 0);
 
