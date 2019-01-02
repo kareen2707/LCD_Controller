@@ -1,6 +1,6 @@
 -- Master_Controller submodule
 -- Creation date: 12/12/2018
--- Last modification: 1/1/2019
+-- Last modification: 2/1/2019
 -- Version: 3.0
 
 library ieee;
@@ -40,14 +40,14 @@ architecture behavioural of Master_Controller is
 
 -- State definition
 
-type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, AcqData );
-signal CurrentState: state;
+type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData);
+signal CurrentState,NextState: state;
 
 -- Auxiliar constants and signals 
 
-constant burstsize		: integer := 3;
+constant burstsize		: integer := 4;
 --burstsize <= to_integer(BurstCount);
-constant max_length		: integer := 2;
+constant max_length		: integer := 1;
 --max_lenght <= to_integer(DataLength);
 signal en_burstcount 	: std_logic;
 signal en_datacount		: std_logic;
@@ -59,98 +59,102 @@ Signal TmpBurstCount	: unsigned (2 downto 0);
 
 	
 Begin
-	Count_process: Process(Clk)
+	NS_process: Process(Clk, Reset_n)
 	begin 
-		if rising_edge(clk) then
-			if AM_ReadDataValid = '1' then 
-				counter <= counter-1;
-				if counter = 0 then
-					counter <= 4;
-				end if;
+		if Reset_n = '0' then
+			CurrentState <= Idle;
+		elsif rising_edge(clk) then
+			CurrentState <= NextState;
+			if en_burstcount = '1' then 
+				burstcounter <= burstcounter+1;
+			else 
+				burstcounter <= 0;
 			end if;
+
+			if burstcounter = burstsize then
+				burstcounter <= 0;
+				--if en_datacount = '1' then
+					datacounter <= datacounter + 1;
+				--else
+				--	datacounter <= 0;
+				--end if;
+			end if;
+
+			--if en_datacount = '0' then
+			--	datacounter <= 0;
+			--end if;
 	  end if;
 	end process;
 
-	AM_process: Process (Clk, Reset_n, counter)
+	AM_process: Process (CurrentState, Start, AM_ReadDataValid, Currently_writing, FIFO_almost_full, burstcounter, datacounter, AM_WaitRequest)
+
 	Begin
 
-	if (Reset_n = '0') then
-		WrFIFO <= '0';
-		AM_Read <= '0';
-		TmpAddress <= (others => '0');
-		TmpBurstCount <= (others => '0');
-		TmpLength <= (others => '0');
-		WrData <= (others => '0');
-		Reading <= '0';
-		CurrentState <= Idle;
-		
-	elsif rising_edge(Clk) then
-		
-		case CurrentState is
-			when Idle =>
+	NextState <= CurrentState;
+	en_burstcount <= '0';
+	en_datacount <= '0';
+	Reading <= '0';
+	AM_Read <= '0';
+	WrFIFO <= '0';
+	WrData <= (others => '0');
+	TmpAddress <= (others => '0');
+	TmpBurstCount <= (others => '0');
+	TmpLength <= (others => '0');
 
-				if Start = '1' then
-				--if DataLength /= X"0000_0000" then	--Starting if length is higher than zero
-					TmpAddress <= Address;
-					TmpLength <= DataLength;
-					TmpBurstCount <= BurstCount;
-					CurrentState <= WaitPermission;
-				end if;
-
-			when WaitPermission =>
-				if Currently_writing = '0' then
-					CurrentState <= WaitFifo;
-					AM_Address <= std_logic_vector(TmpAddress);
-					AM_BurstCount <= std_logic_vector(TmpBurstCount);
-				end if;
-
-			when WaitFifo =>
-
-				if FIFO_Almost_full = '0' then 
-					CurrentState <= WaitData;
-					WrFIFO <= '1';					--Notifying we want to write into the FIFO
-					AM_Read <= '1';					--Initializing the reading process
-					Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
-				end if;
+	case CurrentState is
+		when Idle =>
 				
-			when WaitData =>
+			if Start = '1' then
+				TmpAddress <= Address;
+				--TmpLength <= DataLength;
+				TmpBurstCount <= BurstCount;
+				NextState <= WaitPermission;
+			end if;
 
-				if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
-					--counter <= counter - 1;			--Counting the times that ReadDataValid is high
-					WrData <= AM_ReadData;			--Each reading contains information of 2 pixels (each pixel = 16b)
-					if counter = 0 then
-						CurrentState <= AcqData;
-					else
-						CurrentState <= WriteData;
-					end if;						
-				end if;
+		when WaitPermission =>
+			if Currently_writing = '0' then
+				NextState <= WaitFifo;
+				AM_Address <= std_logic_vector(TmpAddress);
+				AM_BurstCount <= std_logic_vector(TmpBurstCount);
+			end if;
+
+		when WaitFifo =>
+
+			if FIFO_Almost_full = '0' then 
+				NextState <= WaitData;
+				WrFIFO <= '1';					--Notifying we want to write into the FIFO
+				AM_Read <= '1';					--Initializing the reading process
+				Reading <= '1';					--Notifying the SRAM module is been used by LCD Controller
+			end if;
+				
+		when WaitData =>
+
+			if AM_ReadDataValid = '1' then		--We have readed a new data from SRAM
+				en_burstcount <= '1';
+				en_datacount <= '1';
+				WrData <= AM_ReadData;
+			end if;
+
+			if datacounter = max_length then
+				Reading <= '0';
+				AM_Read <= '0';
+				WrFIFO <= '0';
+				NextState <= Idle;
+			elsif burstcounter = burstsize then
+				NextState <= WriteData;
+				TmpAddress <= TmpAddress + 1;
+			end if;
 			
-			when WriteData =>
+		when WriteData =>
 
-				if AM_WaitRequest = '0' then
-					CurrentState <= AcqData;
-					AM_Read <= '0';
-					WrFIFO <= '0';
-				end if;
-
-			when AcqData =>
-
-				if AM_ReadDataValid = '0' then
-					CurrentState <= WaitPermission;
-					Reading <= '0';
-					if TmpLength /= 1 then
-						TmpAddress <= TmpAddress + 1;
-						TmpLength <= TmpLength - 1;
-					else
-						TmpAddress <= Address;
-						TmpLength <= DataLength;
-					end if;
-				end if;
-
+			if AM_WaitRequest = '0' then
+				AM_Read <= '0';
+				WrFIFO <= '0';
+				Reading <= '0';
+				NextState <= WaitPermission;
+			end if;
 			
-		end case;	
-
-	end if;
+	end case;	
 
 end process AM_process;
 	
