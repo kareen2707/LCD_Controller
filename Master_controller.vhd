@@ -1,7 +1,7 @@
 -- Master_Controller submodule
 -- Creation date: 12/12/2018
--- Last modification: 1/1/2019
--- Version: 3.0
+-- Last modification: 6/1/2019
+-- Version: 4.0
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -54,7 +54,6 @@ signal en_datacount		: std_logic;
 signal burstcounter 	: integer range 0 to burstsize := 0; -- Counter used for AM_ReadDataValid	
 signal datacounter		: integer range 0 to max_length := 0;
 Signal TmpAddress		: unsigned (31 downto 0);
-Signal TmpLength		: unsigned (31 downto 0);
 Signal TmpBurstCount	: unsigned (2 downto 0);
 
 	
@@ -73,16 +72,16 @@ Begin
 
 			if burstcounter = burstsize then
 				burstcounter <= 0;
-				--if en_datacount = '1' then
+				if en_datacount = '1' then
 					datacounter <= datacounter + 1;
-				--else
-				--	datacounter <= 0;
-				--end if;
+				else
+					datacounter <= 0;
+				end if;
 			end if;
 
-			--if en_datacount = '0' then
-			--	datacounter <= 0;
-			--end if;
+			if en_datacount = '0' then
+				datacounter <= 0;
+			end if;
 	  end if;
 	end process;
 
@@ -99,7 +98,6 @@ Begin
 	WrData <= (others => '0');
 	TmpAddress <= (others => '0');
 	TmpBurstCount <= (others => '0');
-	TmpLength <= (others => '0');
 
 	case CurrentState is
 		when Idle =>
