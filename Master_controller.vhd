@@ -40,7 +40,7 @@ architecture behavioural of Master_Controller is
 
 -- State definition
 
-type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData);
+type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, WaitSDRAM);
 signal CurrentState,NextState: state;
 
 -- Auxiliar constants and signals 
@@ -133,7 +133,10 @@ Begin
 				en_burstcount <= '1';
 				en_datacount <= '1';
 				WrData <= AM_ReadData;
+				NextState <= WriteData;
 			end if;
+
+		when WriteData =>
 
 			if datacounter = max_length then
 				Reading <= '0';
@@ -141,11 +144,13 @@ Begin
 				WrFIFO <= '0';
 				NextState <= Idle;
 			elsif burstcounter = burstsize then
-				NextState <= WriteData;
+				NextState <= WaitSDRAM;
 				TmpAddress <= TmpAddress + 1;
+			else
+				NextState <= WaitData;
 			end if;
 			
-		when WriteData =>
+		when WaitSDRAM =>
 
 			if AM_WaitRequest = '0' then
 				AM_Read <= '0';
