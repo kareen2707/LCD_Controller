@@ -1,7 +1,7 @@
 -- Master_Controller submodule
 -- Creation date: 12/12/2018
 -- Last modification: 6/1/2019
--- Version: 4.0
+-- Version: 4.1
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -40,12 +40,12 @@ architecture behavioural of Master_Controller is
 
 -- State definition
 
-type state is (Idle, WaitPermission, WaitFifo, WaitData, WriteData, WaitSDRAM);
+type state is (Idle, WaitPermission, WaitFifo, WaitData, WaitSDRAM); 
 signal CurrentState,NextState: state;
 
 -- Auxiliar constants and signals 
 
-constant burstsize		: integer := 4;
+constant burstsize		: integer := 5;
 --burstsize <= to_integer(BurstCount);
 constant max_length		: integer := 1;
 --max_lenght <= to_integer(DataLength);
@@ -70,7 +70,7 @@ Begin
 				burstcounter <= 0;
 			end if;
 
-			if burstcounter = burstsize then
+			if burstcounter = 3 then
 				burstcounter <= 0;
 				if en_datacount = '1' then
 					datacounter <= datacounter + 1;
@@ -90,13 +90,13 @@ Begin
 	Begin
 
 	NextState <= CurrentState;
-	en_burstcount <= '0';
-	en_datacount <= '0';
+--	en_burstcount <= '0';
+--	en_datacount <= '0';
 	Reading <= '0';
 	AM_Read <= '0';
 	WrFIFO <= '0';
-	WrData <= (others => '0');
-	TmpAddress <= (others => '0');
+--	WrData <= (others => '0');
+--	TmpAddress <= (others => '0');
 	TmpBurstCount <= (others => '0');
 
 	case CurrentState is
@@ -104,6 +104,8 @@ Begin
 				
 			if Start = '1' then
 				TmpAddress <= Address;
+				en_burstcount <= '0';
+				en_datacount <= '0';
 				--TmpLength <= DataLength;
 				TmpBurstCount <= BurstCount;
 				NextState <= WaitPermission;
@@ -131,25 +133,21 @@ Begin
 				en_burstcount <= '1';
 				en_datacount <= '1';
 				WrData <= AM_ReadData;
-				NextState <= WriteData;
-			end if;
-
-		when WriteData =>
-
-			if datacounter = max_length then
-				Reading <= '0';
-				AM_Read <= '0';
-				WrFIFO <= '0';
-				NextState <= Idle;
-			elsif burstcounter = burstsize then
-				NextState <= WaitSDRAM;
-				TmpAddress <= TmpAddress + 1;
-			else
-				NextState <= WaitData;
+				if datacounter = 1 then
+					en_datacount <= '0';
+					Reading <= '0';
+					AM_Read <= '0';
+					WrFIFO <= '0';
+					NextState <= Idle;
+				elsif burstcounter = 3 then
+					en_burstcount <= '0';
+					NextState <= WaitSDRAM;
+					TmpAddress <= TmpAddress + 1;
+				end if;
 			end if;
 			
 		when WaitSDRAM =>
-
+			
 			if AM_WaitRequest = '0' then
 				AM_Read <= '0';
 				WrFIFO <= '0';
