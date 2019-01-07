@@ -125,7 +125,7 @@ BEGIN
 	Address  <= X"0000_0008";	-- Origin address from SDRAM     
 	BurstCount <= "011";		-- BurstCount = 3         
 
-	wait for 30 ns;
+	wait for 20 ns;
 	AM_ReadData <= X"0000_0001";
 	AM_ReadDataValid <= '1';
      
