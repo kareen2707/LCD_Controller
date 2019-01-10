@@ -73,10 +73,11 @@ Begin
 				TmpData <= Rd_FIFO(15 downto 0);
 				NextState <= Address_Setup;
 				CountFIFO <= '0';
-			elsif New_Cmd = '1' then
+			elsif New_Cmd= '1' then
 				TmpAddress <= Cmd_Address;
 				TmpData <= Cmd_Data;
 				NextState <= Address_Setup;
+				Write_Ack <= '1';
 			elsif FIFO_Empty = '0' then
 				TmpAddress <= x"002C";
 				TmpData <= Rd_FIFO(31 downto 16);

@@ -40,9 +40,8 @@ signal CurrentState,NextState: state;
 Signal TmpAddress	: std_logic_vector (15 downto 0);
 Signal TmpData		: std_logic_vector (15 downto 0);
 --Need to have two signals to count the number of times the write_activate, write_pulse_l and write_pulse_h occur
-Signal CountDataLoop	: std_logic;	--To write the address then the data
 Signal CountFIFO	: std_logic;	--To take into account the 32 bits from the fifo is two pieces of data
-Signal CountWrite	: std_logic;	--For the two clock cycles that the WRX needs to stay high to write data
+Signal TmpFIFO		: std_logic_vector (15 downto 0);
 
 Begin
 	NS_process: Process(Clk, Reset_n)
@@ -70,16 +69,18 @@ Begin
 				
 			if CountFIFO = '1' then
 				TmpAddress <= x"002C";
-				TmpData <= Rd_FIFO(15 downto 0);
+				TmpData <= TmpFIFO;
 				NextState <= Address_Setup;
 				CountFIFO <= '0';
 			elsif New_Cmd= '1' then
 				TmpAddress <= Cmd_Address;
 				TmpData <= Cmd_Data;
 				NextState <= Address_Setup;
+				Write_Ack <= '1';
 			elsif FIFO_Empty = '0' then
 				TmpAddress <= x"002C";
 				TmpData <= Rd_FIFO(31 downto 16);
+				TmpFIFO <= Rd_FIFO(15 downto 0);
 				NextState <= Address_Setup;
 				CountFIFO <= '1';
 			end if;

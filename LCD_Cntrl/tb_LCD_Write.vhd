@@ -111,10 +111,11 @@ BEGIN
   wait for 100 ns;
   Reset_n <= '1';
   wait for 100 ns;
-  New_Cmd <= '1';
-  Cmd_Address <= x"0050";
+  FIFO_Empty <= '0';
+  Rd_FIFO <= x"78970050";
   Cmd_Data <= x"9605";
-                      
+  wait for 40 ns;
+  New_cmd <= '1';                  
 	wait;
  End Process;
 END;
